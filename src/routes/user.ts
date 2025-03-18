@@ -23,8 +23,8 @@ declare global {
 userRouter.post("/signup", async (req: Request, res: Response): Promise<any> => {
     const {success} = signupInput.safeParse(req.body);
     if(!success){
-        return res.status(411).json({
-            message: "Inputs not correct"
+        return res.status(400).json({
+            message: "Invalid input. Please check your details and try again."
         })
     }
     try {
@@ -39,7 +39,7 @@ userRouter.post("/signup", async (req: Request, res: Response): Promise<any> => 
         });
 
         if (existingUser) {
-            return res.status(409).json({ message: "User already exists" });
+            return res.status(409).json({ message: "User already exists. Try logging in." });
         }
 
         const newUser = await prisma.user.create({
@@ -57,18 +57,17 @@ userRouter.post("/signup", async (req: Request, res: Response): Promise<any> => 
 
         return res.json({token, newUser});
     } catch (error) {
-        console.error("Signup error:", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 });
 
 
 userRouter.post("/signin", async(req : Request,res : Response): Promise<any> =>{
-    const {success} = signinInput.safeParse(req.body);
+    const {success, error} = signinInput.safeParse(req.body);
     if(!success){
-        return res.status(411).json({
-            message: "Inputs not correct"
-        })
+        return res.status(400).json({
+            message: "Invalid username or password format.",
+        });
     } 
     
     try{
@@ -81,8 +80,8 @@ userRouter.post("/signin", async(req : Request,res : Response): Promise<any> =>{
 
         if(!existingUser){
             return res.status(404).json({
-                message: "User not found"
-            })
+                message: "Incorrect username or password."
+            });
         }
 
         // Here we should use JWT signin

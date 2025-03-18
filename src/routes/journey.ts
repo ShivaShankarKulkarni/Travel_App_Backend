@@ -41,14 +41,12 @@ journeyRouter.get("/journeys", authMiddleware,  async (req: Request, res: Respon
 journeyRouter.post("/journey", authMiddleware, async (req: Request, res: Response): Promise<any> =>{
     const {success} = journeyPost.safeParse(req.body);
         if(!success){
-            return res.status(411).json({
-                message: "Inputs not correct"
+            return res.status(400).json({
+                message: "Invalid input. Please check your details and try again."
             })
         }
     const id = Number(req.id);
-    console.log("1");
     try{
-        console.log("2");
         await prisma.journey.create({
             data:{
                 startingLoc: req.body.startingLoc,
@@ -62,8 +60,7 @@ journeyRouter.post("/journey", authMiddleware, async (req: Request, res: Respons
             message: "Journey saved succesfully"
         })
     }catch(error){
-        return res.json({error});
-        console.log("3");
+        return res.status(500);
     }
 })
 
@@ -80,6 +77,6 @@ journeyRouter.delete("/journey", authMiddleware, async( req: Request, res: Respo
             message: "Deleted Successfully"
         })
     }catch(error){
-        return res.json(error);
+        return res.status(500);
     }
 })
