@@ -7,7 +7,7 @@ const port = 3000;
 const cors = require("cors");
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({ origin: "*" })); 
 
 app.use("/v1/user", userRouter);
 app.use("/v1/journey", journeyRouter);
