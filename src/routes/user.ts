@@ -56,8 +56,8 @@ userRouter.post("/signup", async (req: Request, res: Response): Promise<any> => 
         },JWT_SECRET)
 
         return res.json({token, newUser});
-    } catch (error) {
-        return res.status(500).json({ message: "Internal Server Error" });
+    } catch (error: any) {
+        return res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 });
 
