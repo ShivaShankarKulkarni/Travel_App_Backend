@@ -98,3 +98,47 @@ userRouter.post("/signin", async(req : Request,res : Response): Promise<any> =>{
         })
     }
 })
+
+userRouter.post("/googlesignin", async(req : Request,res : Response): Promise<any> =>{
+    // parsing
+    const {email, displayName} = req.body;
+    try{
+        const existingUser = await prisma.user.findFirst({
+            where: {
+                username: req.body.email,
+                fullName: req.body.displayName
+            }
+        })
+
+        if(!existingUser){
+            const newUser = await prisma.user.create({
+                data: { 
+                    username: email,
+                    fullName: displayName,
+                    password: "1234567890",
+                    phoneNumber: "1234567890"
+                }
+            });
+
+            // BELOW TOKEN MUST BE REPLACED BY GOOGLE/FIREBASE GIVEN ACCESS TOKEN
+            const token = await jwt.sign({
+                id: newUser.id
+            }, JWT_SECRET)
+    
+            return res.json({token,newUser})
+        }
+        // BELOW TOKEN MUST BE REPLACED BY GOOGLE/FIREBASE GIVEN ACCESS TOKEN
+        // Here we should use JWT signin
+        const token = await jwt.sign({
+            id: existingUser.id
+        }, JWT_SECRET)
+
+        return res.json({token,newUser: existingUser})
+        
+    } catch(e){
+        res.status(500);
+        return res.json({
+            error: e
+        })
+    }
+})
