@@ -1,3 +1,4 @@
 node_modules
 # Keep environment variables out of version control
 .env
+travel-app-f21a8-firebase-adminsdk-fbsvc-bba8379177.json

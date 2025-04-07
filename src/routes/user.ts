@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import express, { Request, Response } from "express";
 import { JWT_SECRET } from "../config";
 import { signupInput, signinInput } from "travel-app-common"; 
+import { admin } from "../firebaseAdmin";
 
 
 export const userRouter = express.Router();
@@ -100,13 +101,21 @@ userRouter.post("/signin", async(req : Request,res : Response): Promise<any> =>{
 })
 
 userRouter.post("/googlesignin", async(req : Request,res : Response): Promise<any> =>{
-    // parsing
-    const {email, displayName} = req.body;
+    const { id_token } = req.body;
+    if (!id_token) {
+        return res.status(400).json({ error: "ID token is required" });
+    }
     try{
+        const decodedToken = await admin.auth().verifyIdToken(id_token);
+        const { uid, email, name, picture } = decodedToken;
+
+        if (!email || !name) {
+            return res.status(400).json({ error: "Missing required user info from token" });
+        }
         const existingUser = await prisma.user.findFirst({
             where: {
-                username: req.body.email,
-                fullName: req.body.displayName
+                username: email,
+                fullName: name
             }
         })
 
@@ -114,7 +123,7 @@ userRouter.post("/googlesignin", async(req : Request,res : Response): Promise<an
             const newUser = await prisma.user.create({
                 data: { 
                     username: email,
-                    fullName: displayName,
+                    fullName: name,
                     password: "1234567890",
                     phoneNumber: "1234567890"
                 }
@@ -124,7 +133,6 @@ userRouter.post("/googlesignin", async(req : Request,res : Response): Promise<an
             const token = await jwt.sign({
                 id: newUser.id
             }, JWT_SECRET)
-    
             return res.json({token,newUser})
         }
         // BELOW TOKEN MUST BE REPLACED BY GOOGLE/FIREBASE GIVEN ACCESS TOKEN
@@ -132,10 +140,9 @@ userRouter.post("/googlesignin", async(req : Request,res : Response): Promise<an
         const token = await jwt.sign({
             id: existingUser.id
         }, JWT_SECRET)
-
         return res.json({token,newUser: existingUser})
         
-    } catch(e){
+    } catch(e: any){
         res.status(500);
         return res.json({
             error: e
