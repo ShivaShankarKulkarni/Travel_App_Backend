@@ -3,6 +3,7 @@ import express, { Request, Response } from "express";
 import { JWT_SECRET } from "../config";
 import { signupInput, signinInput } from "travel-app-common"; 
 import { admin } from "../firebaseAdmin";
+import { authMiddleware } from "../middleware";
 
 
 export const userRouter = express.Router();
@@ -147,5 +148,26 @@ userRouter.post("/googlesignin", async(req : Request,res : Response): Promise<an
         return res.json({
             error: e
         })
+    }
+})
+
+userRouter.delete("/deleteAccount", authMiddleware, async( req: Request, res: Response): Promise<any> =>{
+    const id = Number(req.id);
+    try{
+        await prisma.journey.deleteMany({
+            where:{
+                captainId: id
+            }
+        })
+        await prisma.user.delete({
+            where: {
+                id: id
+            }
+        })
+        return res.json({
+            message: "Account & Journeys Deleted Successfully"
+        })
+    }catch(error: any){
+        return res.status(500);
     }
 })
