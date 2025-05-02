@@ -151,6 +151,47 @@ userRouter.post("/googlesignin", async(req : Request,res : Response): Promise<an
     }
 })
 
+userRouter.post("/phonenumber", async(req : Request,res : Response): Promise<any> =>{
+    const { id_token } = req.body;
+    if (!id_token) {
+        return res.status(400).json({ error: "ID token is required" });
+    }
+    try{
+        const decodedToken = await admin.auth().verifyIdToken(id_token);
+        const { user_id, phone_number } = decodedToken;
+
+        if (!phone_number) {
+            return res.status(400).json({ error: "Missing required user info from token" });
+        }
+        const existingUser = await prisma.user.findFirst({
+            where: {
+                username: phone_number
+            }
+        })
+
+        if(!existingUser){
+            const newUser = await prisma.user.create({
+                data: { 
+                    username: phone_number,
+                    fullName: "1234567890",
+                    password: "1234567890",
+                    phoneNumber: "1234567890"
+                }
+            });
+            return res.json({newUser})
+        }
+        return res.json({newUser: existingUser})
+        
+    } catch(e: any){
+        console.log(e.message);
+        res.status(500);
+        
+        return res.json({
+            error: e
+        })
+    }
+})
+
 userRouter.delete("/deleteAccount", authMiddleware, async( req: Request, res: Response): Promise<any> =>{
     const id = Number(req.id);
     try{
